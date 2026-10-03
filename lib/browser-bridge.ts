@@ -45,10 +45,10 @@ function connect(timeoutMs:number):Promise<string> {
 
 // Any browser can use HTTP to submit and read its reports. The existing
 // extension independently claims the shared queue and operates its own ChatGPT.
-export async function bridgeCall<T>(action:'status'|'create'|'get'|'cancel',payload:Record<string,unknown> = {},timeoutMs=30000):Promise<T> {
+export async function bridgeCall<T>(action:'status'|'create'|'get'|'cancel'|'read',payload:Record<string,unknown> = {},timeoutMs=30000):Promise<T> {
   const token=await connect(timeoutMs);
   if(action==='status')return request<T>('/status',undefined,token,timeoutMs);
   if(action==='create')return request<T>('/tasks',payload,token,timeoutMs);
   if(typeof payload.id!=='string'||!/^[a-f0-9]{24}$/.test(payload.id))throw new Error('报告任务编号无效。');
-  return request<T>(`/tasks/${payload.id}${action==='cancel'?'/cancel':''}`,action==='cancel'?{}:undefined,token,timeoutMs);
+  return request<T>(`/tasks/${payload.id}${action==='cancel'?'/cancel':action==='read'?'/read-result':''}`,action==='get'?undefined:{},token,timeoutMs);
 }

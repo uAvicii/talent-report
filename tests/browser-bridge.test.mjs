@@ -53,6 +53,15 @@ test('cancellation targets only a valid task ID',async()=>{
   assert.equal(h.calls[1].options.method,'POST');
 });
 
+test('reading an existing conversation keeps the original task identity',async()=>{
+  const h=await harness(async()=>({ok:true,json:async()=>({status:'queued'})}));
+  await h.bridgeCall('read',{id:'c'.repeat(24)});
+  assert.match(h.calls[1].url,/\/tasks\/c{24}\/read-result$/);
+  assert.equal(h.calls[1].options.method,'POST');
+  assert.deepEqual(JSON.parse(h.calls[1].options.body),{});
+  assert.equal(h.calls.some(call=>call.url.endsWith('/tasks')),false);
+});
+
 test('expired capabilities reconnect on the next action without replaying writes',async()=>{
   let count=0;
   const h=await harness(async()=>({ok:++count>1,status:401,json:async()=>count===1?{error:'连接已失效'}:{connected:true}}));
