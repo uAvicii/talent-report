@@ -1,68 +1,82 @@
-# 知途 · 天赋事业报告
+# 知途 · 即时天赋事业报告
 
-参考用户提供的宣传图复刻业务介绍与预约逻辑，UI 重新设计。临时品牌「知途」可在配置中更换。
+React + TypeScript 前端（Vinext / Vite，兼容 Next.js App Router），原生 CSS 主题。流程已由预约登记改为：提交资料 → 同一个 Image Bridge 插件自动操作已登录 ChatGPT → 回传文本 → 当前页面展示报告。
 
-## 技术与运行
+## 日常使用
 
-- React 19 + TypeScript，采用 Vinext / Vite 构建，兼容 Next.js App Router 文件结构。
-- 原生 CSS 自定义主题；Radix Dialog 处理弹窗、焦点约束与 Escape 关闭。
-- Cloudflare D1 保存预约意向，服务端验证字段与信息使用同意；UUID 用于重复提交去重。
-- 环境：Node.js 22.13+（建议 Node.js 24）。
+在安装 Image Bridge 的 Chrome 中打开本项目。网页与 ChatGPT 必须使用同一个浏览器中的插件；Codex 内置浏览器不会自动加载 Chrome 插件。
+
+1. 启动 `C:/Users/Lenovo/Documents/demo/image-bridge/server.py`。要求 Python 3.9+。
+2. 在 `chrome://extensions` 重新加载原来的 `C:/Users/Lenovo/Documents/demo/image-bridge/extension`，确认版本 0.1.5。保留原 `data/` 和配对码。
+3. 打开 http://127.0.0.1:8765 ，复制配对码。插件选择「本地」，填配对码，开启「自动领取任务」，保存并连接。
+4. 确认同一 Chrome 中 ChatGPT 已登录。打开报告页面并刷新，点击「生成我的报告」，填写资料，确认资料会提交给 ChatGPT 后提交。
+5. 页面自动显示任务状态；完成后展示优势画像、8 个事业分析章节、4 周行动计划和需要验证的判断，可下载原文。
+
+已部署页面：https://talent-path-studio.pepe0523pepe.chatgpt.site （访问权限保持原来的私有设置）。即使前端已部署，生成仍需要这台电脑上的桥接服务、插件与已登录的 ChatGPT。电脑离线时不会由云端自动执行。
+
+## 本地开发
+
+使用 Node.js 22.13+，建议 Node.js 24。
 
 ```bash
 npm ci
 npm run dev
 ```
 
-本地默认打开 http://127.0.0.1:5173/ 。
-
-## 后续维护
-
-| 要修改的内容 | 文件 |
-| --- | --- |
-| 品牌、价格、问题、FAQ、示例内容 | `lib/site-content.ts` |
-| 页面结构、预约弹窗、状态 | `app/page.tsx` |
-| 配色、字号、间距、响应式 | `app/globals.css` |
-| 网页标题、描述与语言 | `app/layout.tsx` |
-| 浏览器图标 | `public/favicon.svg` |
-| 预约数据字段 | `db/schema.ts` |
-| 预约接口及校验 | `app/api/reservations/route.ts` |
-
-主题变量位于 CSS 顶部：`--ink` 深墨绿、`--accent` 亮青绿、`--muted` 次要文字、`--line` 分隔线、`--surface` 区块底色。
-价格与主要时长集中配置；修改交付天数、咨询时长后，也同步调整 steps / faqs 中的流程说明和页面元信息。
-
-## 数据库与本地验证
-
-生产数据库由 Sites 根据 `.openai/hosting.json` 中的 `d1: "DB"` 配置提供。已生成的迁移在 `drizzle/`，发布时应用。
-
-先构建，再初始化本地数据库：
+默认地址 http://127.0.0.1:5173 。桥接服务单独启动：
 
 ```bash
-npm run build
-npx wrangler d1 execute DB --local --persist-to .wrangler/state --config dist/server/wrangler.json --file drizzle/0000_nervous_impossible_man.sql
-npm run dev
+cd C:/Users/Lenovo/Documents/demo/image-bridge
+python server.py
 ```
 
-修改 schema 后运行 `npm run db:generate`，检查新迁移后再发布。已应用的迁移不要重写。
-生产预约可通过 Sites 数据库工具查看 `reservations` 表，暂未添加公开管理后台或列表接口。字段包括称呼、联系方式、阶段、问题、登记时间、处理状态。状态初始值 `pending_contact` 表示待人工联系。
+## 维护入口
 
-## 已完成的体验
+| 修改内容 | 文件 |
+| --- | --- |
+| 品牌、原服务价格、问题、FAQ、流程说明 | `lib/site-content.ts` |
+| 主页面结构与弹窗入口 | `app/page.tsx` |
+| 资料表单、队列状态与报告展示 | `components/report-workflow.tsx` |
+| 报告提示词、JSON 结构校验 | `lib/report-domain.mjs` |
+| 前端与插件通信协议 | `lib/browser-bridge.ts` |
+| 主题变量、排版、手机布局 | `app/globals.css` |
+| 网页标题、描述、语言 | `app/layout.tsx` |
 
-- 桌面与手机响应式布局，手机底部预约入口。
-- 8 个问题展开阅读、3 类报告示例切换、FAQ。
-- 预约填写、必填校验、保存中、失败重试、成功编号。
-- 对无同意、无效字段、跨域来源的请求进行验证；重复 UUID 不重复新增。
+配色变量在 CSS 顶部：`--ink` 深墨绿、`--accent` 亮青绿、`--muted` 次要文字、`--line` 分隔线、`--surface` 区块底色。
 
-## 当前业务边界
+## 共用插件的改动
 
-这是业务展示与预约登记系统，不包含自动生成真实个人报告、在线支付、短信通知、微信通知或人员分配。预约成功代表资料保存，不代表付款完成或工作人员已收到通知。
-商户信息未提供，因此采用「预约 → 人工确认服务与付款 → 收集个人资料 → 人工出具报告与咨询」的流程。要启用实际购买，需要接入自己的支付商户并验证支付回调。
-报告示例为结构演示，不是个人测评结果。原图中关于样本规模、预测时期等宣传无法验证，没有作为事实承诺发布。服务文案、交付时间与内测政策上线经营前应按实际情况确认。
+原 image-bridge 文件已在原路径更新，不需要安装第二个扩展。其详细说明见原项目 `TALENT-REPORT.md`。
 
-## 验证记录
+- `extension/report-page.js`：仅为当前站点及本地 5173 页面注入通信脚本。
+- `extension/report-client.js`：限定页面来源，创建/查询/取消其自身的文本任务；配对码不返回页面。
+- `extension/text-dom.js`：读取新助手回答，排除旧轮次及已标记的思考区，文字稳定后回传。
+- `extension/content.js`：按 `outputType` 分别执行生图或文本任务。
+- `server.py`：增加文本完成回传、客户端请求去重、协议能力与单任务心跳检测。
 
-- TypeScript 检查通过，生产构建通过。
-- 本地页面返回 200，报告示例切换正常。
-- 本地表单保存成功，返回登记编号；未勾选同意的接口请求返回 400。
-- 检查桌面与 390px 手机视口，未发现水平溢出。
-- 在线版本默认私有，仅账户所有者可访问；本地测试数据没有上传到生产库。
+保留旧 `mode: text` 的「文生图」含义；新增 `outputType: text` 才代表文本报告。旧生图默认 `outputType: image`。两种输出共享同一个本地串行队列，同时只执行一个任务。原线上生图服务本次没有部署；报告功能要求选择本地。
+
+任务保存在 image-bridge 的 `data/tasks.json`，结果来源于真实回传的 `text` 字段。网页的 sessionStorage 仅记住当前任务编号以便刷新恢复，报告内容的存储来源是本地服务。原预约接口已移除，旧 D1 数据和迁移保留，未删除已有登记记录。
+
+断线后不会自动重新发送提示词。重试相同资料使用同一请求标识，防止重复建任务。取消停止结果回传，已提交给 ChatGPT 的生成可能继续。返回 JSON 与约定不同时，页面保留并显示原文，不伪造报告。内容以 React 文本方式渲染，不执行模型输出的 HTML 或脚本。
+
+## 验证与限制
+
+- TypeScript 检查及生产构建通过。
+- 报告领域校验 2 项测试通过。
+- image-bridge 服务端 24 项测试通过；直接涉及插件、文本读取与图片兼容的 30 项 JS 测试通过。
+- 原项目完整 JS 测试有 1 项既有复古未来主义提示词长度失败，本次未修改相关网页代码。
+- 已在本地浏览器检查新表单及未安装插件时的连接提示。
+- 自动化测试没有调用真实 ChatGPT；真实生成与回传需要在重新加载并配对的 Chrome 中联调，目前未验证。
+
+网站保留原服务报价作为展示信息，当前生成体验不收费，没有真实支付接口。30 分钟商业咨询需另行安排；即时执行仅指 AI 报告生成。报告根据用户自述提供探索建议，不是验证过的心理测评，也不能预测收入、运势或成功日期。
+
+## 验证命令
+
+```bash
+node node_modules/typescript/bin/tsc --noEmit
+node --test tests/report-domain.test.mjs
+npm run build
+```
+
+需要增加新部署域名时，同步更新原扩展 `manifest.json`、`report-page.js` 与 `report-client.js` 中的精确来源配置，然后重新加载扩展、刷新新页面。不要将配对码放进前端源码或公开环境变量。
