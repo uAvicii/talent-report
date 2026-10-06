@@ -1,11 +1,15 @@
-export interface ReportTask {id:string;status:string;text:string;detail:string;conversationUrl:string;updated:number;}
-export interface BridgeStatus {connected:boolean;environment:string;version:string;online:boolean;enabled:boolean;}
+export interface ReportTask {id:string;status:string;text:string;detail:string;conversationUrl:string;updated:number;executor?:{workerId:string;version:string;claimedAt:number};}
+export interface BridgeStatus {connected:boolean;environment:string;version:string;online:boolean;enabled:boolean;textSupported?:boolean;imageWorkerOnline?:boolean;workerVersion?:string;}
 
 // The Tencent build injects its public API address; local/Sites builds keep
 // using the original local workbench. Pairing credentials never enter the bundle.
 declare const __REPORT_SERVICE_URL__:string;
 const service = typeof __REPORT_SERVICE_URL__==='string' ? __REPORT_SERVICE_URL__ : 'http://127.0.0.1:8765/api/report-client';
 export const workbenchName=/^http:\/\/(127\.0\.0\.1|localhost):/.test(service)?'本地工作台':'线上工作台';
+export function bridgeStatusMessage(status:BridgeStatus):string {
+  if(status.textSupported===false&&status.imageWorkerOnline)return `${workbenchName}已连接 · 当前在线执行端未声明文本报告能力，请更新并重新连接执行插件`;
+  return status.online&&status.enabled?`${workbenchName}已连接 · 执行插件在线`:status.online?`${workbenchName}已连接 · 请在插件中开启自动领取任务`:`${workbenchName}已连接 · 执行插件暂未在线，任务将等待领取`;
+}
 let session:Promise<string>|null = null;
 
 async function request<T>(path:string,body:Record<string,unknown>|undefined,token:string|undefined,timeoutMs:number):Promise<T> {

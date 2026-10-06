@@ -38,6 +38,16 @@ test('reconnecting only reads status and never creates another task',async()=>{
   assert.deepEqual(h.calls.map(call=>call.url.split('/').pop()),['session','status','status']);
 });
 
+test('connection feedback distinguishes image-only workers from report-capable workers',async()=>{
+  const h=await harness(async()=>({ok:true,json:async()=>({connected:true})}));
+  const base={connected:true,environment:'local',version:'3',online:false,enabled:false};
+  assert.match(h.bridgeStatusMessage({...base,textSupported:false,imageWorkerOnline:true}),/未声明文本报告能力/);
+  assert.match(h.bridgeStatusMessage({...base,online:true,enabled:true,textSupported:true}),/执行插件在线/);
+  assert.match(h.bridgeStatusMessage({...base,online:true}),/开启自动领取/);
+  assert.match(h.bridgeStatusMessage(base),/暂未在线/);
+  assert.equal(h.calls.length,0);
+});
+
 test('a failed creation is not automatically replayed',async()=>{
   const h=await harness(async()=>{throw new TypeError('network failed');});
   await assert.rejects(h.bridgeCall('create',{prompt:'test',clientRequestId:'same-id'}),/无法连接本地工作台/);

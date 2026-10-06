@@ -1,14 +1,14 @@
 "use client";
 import {useState,useEffect,useRef,type FormEvent} from 'react';
 import {Check,LoaderCircle,FileText,Download,RefreshCw,X,CircleCheck} from 'lucide-react';
-import {bridgeCall,workbenchName,type ReportTask,type BridgeStatus} from '@/lib/browser-bridge';
+import {bridgeCall,bridgeStatusMessage,workbenchName,type ReportTask,type BridgeStatus} from '@/lib/browser-bridge';
 import {buildReportPrompt,parseReport,terminalStatuses,reportStatuses,type TalentReport} from '@/lib/report-domain.mjs';
 import {siteContent} from '@/lib/site-content';
 
 export function ReportForm({onCreated}:{onCreated:(task:ReportTask)=>void}) {
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[connection,setConnection]=useState('');
   const request=useRef({prompt:'',id:''});
-  async function connect(){setConnection('正在检查…');try{const s=await bridgeCall<BridgeStatus>('status',{},10000);setConnection(s.online&&s.enabled?`${workbenchName}已连接 · 执行插件在线`:s.online?`${workbenchName}已连接 · 请在插件中开启自动领取任务`:`${workbenchName}已连接 · 执行插件暂未在线，任务将等待领取`);}catch(e){setConnection(e instanceof Error?e.message:`无法连接${workbenchName}`);}}
+  async function connect(){setConnection('正在检查…');try{const s=await bridgeCall<BridgeStatus>('status',{},10000);setConnection(bridgeStatusMessage(s));}catch(e){setConnection(e instanceof Error?e.message:`无法连接${workbenchName}`);}}
   useEffect(()=>{void connect();},[]);
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();setError('');setBusy(true);
