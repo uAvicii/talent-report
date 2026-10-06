@@ -8,3 +8,52 @@
 @media(max-width:760px){.result-profile,.result-sections{grid-template-columns:1fr;gap:24px}.result-summary{padding:24px;gap:12px}.result-summary h3{font-size:23px}.result-action>div{grid-template-columns:1fr 1fr}.job-steps{grid-template-columns:1fr 1fr}.job-progress{padding:24px}.result-toolbar>button{margin-left:0}.result-action{padding:22px}.result-action h3{font-size:21px}.result-profile{margin:24px 0}}
 @media print{.header,.hero,.principle-strip,#questions,#approach,#process,.pricing-wrap,.faq,.footer,.mobile-buy,.result-toolbar,.job-meta{display:none!important}.report-workspace{padding:0;width:100%}.result-sections{display:block}.result-sections article{break-inside:avoid;margin:25px 0}.result-summary{background:white;color:black;border:1px solid #ccc}.result-summary p{color:black}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}.spin{animation:none}}
+
+/* The questionnaire uses native controls and keeps the existing report workflow. */
+.modal-content:has(.questionnaire-form){width:min(660px,calc(100% - 32px))}
+.questionnaire-form{display:grid;gap:16px;margin-top:22px}
+.questionnaire-progress>div{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
+.questionnaire-progress>div>span:first-child{color:var(--ink);font-weight:600}
+.questionnaire-progress progress{display:block;width:100%;height:5px;margin-top:10px;appearance:none;border:none;border-radius:4px;overflow:hidden;background:var(--surface);accent-color:var(--ink)}
+.questionnaire-progress progress::-webkit-progress-bar{background:var(--surface)}
+.questionnaire-progress progress::-webkit-progress-value{background:var(--ink);border-radius:4px}
+.questionnaire-progress progress::-moz-progress-bar{background:var(--ink);border-radius:4px}
+.questionnaire-question{border:0;margin:0;padding:0;min-width:0}
+.questionnaire-question legend{padding:0;width:100%}
+.questionnaire-heading{font-size:21px;line-height:1.5;color:var(--ink);font-weight:600;scroll-margin-block:18px}
+.questionnaire-heading:focus{outline:none}
+.questionnaire-hint{font-size:13px;line-height:1.8;color:var(--muted);margin-top:7px}
+.questionnaire-kind{font-size:12px;color:#527342;margin:12px 0 10px}
+.questionnaire-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.questionnaire-option{display:flex;align-items:center;gap:10px;min-height:54px;padding:11px 13px;border:1px solid var(--line);border-radius:6px;background:#fafcf9;cursor:pointer;font-size:14px;line-height:1.6;transition:background .15s,border-color .15s}
+.questionnaire-option:hover{border-color:#95ad8a}
+.questionnaire-option.selected{border-color:var(--ink);background:#edf5eb;color:var(--ink)}
+.questionnaire-option:focus-within{outline:2px solid #548838;outline-offset:2px}
+.questionnaire-option input{flex-shrink:0;width:16px;height:16px;accent-color:var(--ink);margin:0}
+.questionnaire-option input:focus{outline:none}
+.questionnaire-actions{display:flex;justify-content:space-between;gap:12px;padding-top:5px}
+.questionnaire-actions>.primary{margin-left:auto;min-width:160px;gap:10px}
+.questionnaire-back{display:flex;align-items:center;justify-content:center;gap:7px;background:var(--surface);color:var(--ink);border-radius:6px;padding:12px 16px;font-size:14px}
+.questionnaire-save{font-size:11px;color:var(--muted);line-height:1.7;text-align:center}
+.questionnaire-review{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid var(--line)}
+.questionnaire-review li{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}
+.questionnaire-review li>div{min-width:0}
+.questionnaire-review b{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.questionnaire-review p{font-size:14px;line-height:1.7;margin-top:3px;overflow-wrap:anywhere}
+.questionnaire-review button{flex-shrink:0;background:transparent;color:var(--ink);font-size:12px;padding:9px 10px;text-decoration:underline;text-underline-offset:4px}
+.questionnaire-extra{font-size:14px;font-weight:500}
+.questionnaire-extra>span{font-size:12px;color:var(--muted);font-weight:400;margin-left:5px}
+.questionnaire-extra input,.questionnaire-extra textarea{display:block;width:100%;margin-top:7px;border:1px solid var(--line);background:#fafcf9;border-radius:6px;padding:11px 12px;color:var(--text);font-weight:400;font-size:14px}
+.questionnaire-extra textarea{resize:vertical;min-height:90px}
+.questionnaire-form .consent{display:flex;gap:9px;font-size:12px;color:var(--muted);align-items:flex-start;line-height:1.8}
+@media(max-width:480px){
+  .modal-content:has(.questionnaire-form){padding:24px 20px}
+  .modal-content:has(.questionnaire-form) .modal-title{font-size:23px;padding-right:14px}
+  .modal-content:has(.questionnaire-form) .section-kicker{font-size:10px;margin-bottom:12px;padding-right:25px}
+  .questionnaire-heading{font-size:19px}
+  .questionnaire-option{padding:10px 9px;font-size:13px;gap:7px;min-height:58px}
+  .questionnaire-options{gap:8px}
+  .questionnaire-actions>.primary{min-width:145px;font-size:14px;padding:14px 16px}
+  .questionnaire-back{padding:12px;font-size:13px}
+}
+@media(max-width:340px){.questionnaire-options{grid-template-columns:1fr}}
