@@ -1,0 +1,68 @@
+name: Deploy Talent Report to Tencent Cloud
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: talent-report-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VITE_REPORT_SERVICE: https://report.pepehub.top/api/report-client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Validate deployment secrets
+        env:
+          TENCENT_HOST: ${{ secrets.TENCENT_HOST }}
+          TENCENT_SSH_KEY: ${{ secrets.TENCENT_SSH_KEY }}
+          TENCENT_KNOWN_HOSTS: ${{ secrets.TENCENT_KNOWN_HOSTS }}
+          TENCENT_SSH_PORT: ${{ secrets.TENCENT_SSH_PORT }}
+        run: bash deploy/check-config.sh
+      - name: Check and build
+        run: |
+          npm ci
+          node node_modules/typescript/bin/tsc --noEmit --incremental false
+          node --test tests/report-domain.test.mjs tests/browser-bridge.test.mjs
+          npm run build:tencent
+          bash -n deploy/install.sh deploy/check-config.sh
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.TENCENT_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.TENCENT_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Upload and publish
+        env:
+          HOST: ${{ secrets.TENCENT_HOST }}
+          SSH_PORT: ${{ secrets.TENCENT_SSH_PORT }}
+        run: |
+          set -euo pipefail
+          port="${SSH_PORT:-22}"
+          release="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          archive="talent-report-${release}.tar.gz"
+          mkdir -p /tmp/talent-report-package/site /tmp/talent-report-package/deploy
+          cp -a dist/tencent/. /tmp/talent-report-package/site/
+          cp deploy/install.sh /tmp/talent-report-package/deploy/
+          tar -czf "$archive" -C /tmp/talent-report-package site deploy
+          scp -P "$port" -o BatchMode=yes "$archive" "root@${HOST}:/root/$archive"
+          ssh -p "$port" -o BatchMode=yes "root@$HOST" "bash -s -- '$archive' '$release'" <<'REMOTE'
+          set -euo pipefail
+          archive="/root/$1"
+          release="$2"
+          stage=$(mktemp -d /root/talent-report-release.XXXXXX)
+          trap 'rm -rf "$stage"; rm -f "$archive"' EXIT
+          tar -xzf "$archive" -C "$stage"
+          bash "$stage/deploy/install.sh" "$stage" "$release"
+          REMOTE

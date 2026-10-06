@@ -69,3 +69,15 @@ test('expired capabilities reconnect on the next action without replaying writes
   await h.bridgeCall('status');
   assert.equal(h.calls.filter(call=>call.url.endsWith('/session')).length,2);
 });
+
+test('a configured online build uses the online queue and reports its connection name',async()=>{
+  globalThis.__REPORT_SERVICE_URL__='https://report.pepehub.top/api/report-client';
+  try {
+    const h=await harness(async()=>({ok:true,json:async()=>({connected:true})}));
+    await h.bridgeCall('status');
+    assert.equal(h.workbenchName,'线上工作台');
+    assert.equal(h.calls[0].url,'https://report.pepehub.top/api/report-client/session');
+    assert.equal(h.calls[1].url,'https://report.pepehub.top/api/report-client/status');
+    assert.equal(h.calls.some(call=>call.url.includes('127.0.0.1')),false);
+  } finally {delete globalThis.__REPORT_SERVICE_URL__;}
+});

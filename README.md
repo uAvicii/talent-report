@@ -1,5 +1,9 @@
 # 知途 · 即时天赋事业报告
 
+## GitHub Actions 部署到腾讯云
+
+已增加与 image-bridge 相同的 SSH 自动发布流程，目标网站 `https://report.pepehub.top`。根据现有服务器 `/opt/qkw-pd/Caddyfile`，使用原 Docker Caddy 对外提供 HTTPS：页面由 Caddy 读取静态文件，报告接口转发到现有线上队列。网站使用独立目录 `/var/www/talent-report/current`。Secrets、DNS、Docker 目录挂载和 Caddy 配置步骤见 [deploy/README.md](deploy/README.md)。腾讯云专用构建命令 `npm run build:tencent`，复用现有 React 页面；原本的本地开发与 Sites 构建继续可用。
+
 React + TypeScript 前端（Vinext / Vite，兼容 Next.js App Router），原生 CSS 主题。流程为：任意浏览器提交资料 → 本地 image-bridge 服务队列 → 原有 Image Bridge 插件操作已登录 ChatGPT → 回传本地服务 → 当前页面显示报告。
 
 ## 日常使用
@@ -60,7 +64,7 @@ python server.py
 
 任务保存在 image-bridge 的 `data/tasks.json`，结果来源于真实回传的 `text` 字段。网页的 sessionStorage 记住当前任务编号和随机客户端标识，刷新后只读取原任务。服务端签发绑定页面来源与客户端的报告凭据，仅允许创建文本任务及读取/取消自身任务，不能读取全局配对码、其他客户端报告或图片任务，也不能领取任务。全局配对码仍只在原工作台与插件之间使用。旧版直接插件创建的任务保留在工作台，其结果不会自动迁移到新的页面客户端。
 
-本地服务明确允许 `http://127.0.0.1:5173`、`http://localhost:5173` 和当前部署域名访问报告接口。浏览器若弹出本地网络访问提示，需允许当前报告页面访问本机服务。跨浏览器使用指同一台电脑；其他电脑的 `127.0.0.1` 不指向这台机器。
+服务明确允许 `http://127.0.0.1:5173`、`http://localhost:5173`、当前 Sites 域名和 `https://report.pepehub.top` 访问报告接口。本地开发模式跨浏览器指同一台电脑；腾讯云构建通过 report 子域名连接线上共享队列，不要求访客启动本地服务。浏览器若在本地模式弹出本地网络访问提示，需允许当前报告页面访问本机服务。
 
 断线后不会自动重新发送提示词。重试相同资料使用同一请求标识，防止重复建任务。失败/中断且已有原会话时可点击「重新读取原会话结果」，插件只打开原会话并读取，仍使用原任务编号。取消停止结果回传，已提交给 ChatGPT 的生成可能继续。返回 JSON 与约定不同时，旧标记读取通道保留并显示原文；新工作区读取要求报告结构完整，不伪造报告。内容以 React 文本方式渲染，不执行模型输出的 HTML 或脚本。
 

@@ -1,7 +1,11 @@
 export interface ReportTask {id:string;status:string;text:string;detail:string;conversationUrl:string;updated:number;}
 export interface BridgeStatus {connected:boolean;environment:string;version:string;online:boolean;enabled:boolean;}
 
-const service = 'http://127.0.0.1:8765/api/report-client';
+// The Tencent build injects its public API address; local/Sites builds keep
+// using the original local workbench. Pairing credentials never enter the bundle.
+declare const __REPORT_SERVICE_URL__:string;
+const service = typeof __REPORT_SERVICE_URL__==='string' ? __REPORT_SERVICE_URL__ : 'http://127.0.0.1:8765/api/report-client';
+export const workbenchName=/^http:\/\/(127\.0\.0\.1|localhost):/.test(service)?'本地工作台':'线上工作台';
 let session:Promise<string>|null = null;
 
 async function request<T>(path:string,body:Record<string,unknown>|undefined,token:string|undefined,timeoutMs:number):Promise<T> {
@@ -17,12 +21,12 @@ async function request<T>(path:string,body:Record<string,unknown>|undefined,toke
     const value = await response.json() as {error?:string};
     if(!response.ok) {
       if(response.status===401) session=null;
-      throw new Error(value.error||`本地工作台请求失败（HTTP ${response.status}）。`);
+      throw new Error(value.error||`${workbenchName}请求失败（HTTP ${response.status}）。`);
     }
     return value as T;
   } catch(error) {
-    if(controller.signal.aborted)throw new Error('本地工作台响应超时，请检查服务是否运行；不会自动重复提交。');
-    if(error instanceof TypeError)throw new Error('无法连接本地工作台。请启动 image-bridge/server.py；若浏览器提示访问本地网络，请允许当前页面访问。');
+    if(controller.signal.aborted)throw new Error(`${workbenchName}响应超时，请检查服务是否运行；不会自动重复提交。`);
+    if(error instanceof TypeError)throw new Error(workbenchName==='本地工作台'?'无法连接本地工作台。请启动 image-bridge/server.py；若浏览器提示访问本地网络，请允许当前页面访问。':'无法连接线上工作台，请检查工作台服务、HTTPS 和报告页面来源配置。');
     throw error;
   } finally { clearTimeout(timer); }
 }
@@ -36,7 +40,7 @@ function connect(timeoutMs:number):Promise<string> {
         sessionStorage.setItem('talent-report-client',clientId);
       }
       const result=await request<{token:string;protocolVersion:number}>('/session',{clientId},undefined,timeoutMs);
-      if(result.protocolVersion!==3||!/^report\.[a-f0-9]{64}\.[a-f0-9]{64}$/.test(result.token))throw new Error('本地服务版本不兼容，请重启更新后的 image-bridge/server.py。');
+      if(result.protocolVersion!==3||!/^report\.[a-f0-9]{64}\.[a-f0-9]{64}$/.test(result.token))throw new Error('工作台版本不兼容，请更新并重启 image-bridge/server.py。');
       return result.token;
     })().catch(error=>{session=null;throw error;});
   }

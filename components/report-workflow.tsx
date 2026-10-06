@@ -1,14 +1,14 @@
 "use client";
 import {useState,useEffect,useRef,type FormEvent} from 'react';
 import {Check,LoaderCircle,FileText,Download,RefreshCw,X,CircleCheck} from 'lucide-react';
-import {bridgeCall,type ReportTask,type BridgeStatus} from '@/lib/browser-bridge';
+import {bridgeCall,workbenchName,type ReportTask,type BridgeStatus} from '@/lib/browser-bridge';
 import {buildReportPrompt,parseReport,terminalStatuses,reportStatuses,type TalentReport} from '@/lib/report-domain.mjs';
 import {siteContent} from '@/lib/site-content';
 
 export function ReportForm({onCreated}:{onCreated:(task:ReportTask)=>void}) {
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[connection,setConnection]=useState('');
   const request=useRef({prompt:'',id:''});
-  async function connect(){setConnection('正在检查…');try{const s=await bridgeCall<BridgeStatus>('status',{},10000);setConnection(s.online&&s.enabled?'本地工作台已连接 · 执行插件在线':s.online?'本地工作台已连接 · 请在插件中开启自动领取任务':'本地工作台已连接 · 执行插件暂未在线，任务将等待领取');}catch(e){setConnection(e instanceof Error?e.message:'无法连接本地工作台');}}
+  async function connect(){setConnection('正在检查…');try{const s=await bridgeCall<BridgeStatus>('status',{},10000);setConnection(s.online&&s.enabled?`${workbenchName}已连接 · 执行插件在线`:s.online?`${workbenchName}已连接 · 请在插件中开启自动领取任务`:`${workbenchName}已连接 · 执行插件暂未在线，任务将等待领取`);}catch(e){setConnection(e instanceof Error?e.message:`无法连接${workbenchName}`);}}
   useEffect(()=>{void connect();},[]);
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();setError('');setBusy(true);
@@ -22,14 +22,14 @@ export function ReportForm({onCreated}:{onCreated:(task:ReportTask)=>void}) {
     }catch(err){setError(err instanceof Error?err.message:'提交失败，请重试。');}finally{setBusy(false);}
   }
   return <form className="booking-form report-form" onSubmit={submit}>
-    <div className="connection-box"><span>通过本地工作台生成 · 支持跨浏览器</span><button type="button" onClick={connect}>检查连接</button>{connection&&<p role="status">{connection}</p>}<small>报告页可在 Edge 等浏览器打开；插件在已登录 ChatGPT 的浏览器中执行。</small></div>
+    <div className="connection-box"><span>通过{workbenchName}生成 · 支持跨浏览器</span><button type="button" onClick={connect}>检查连接</button>{connection&&<p role="status">{connection}</p>}<small>报告页可在 Edge 等浏览器打开；插件在已登录 ChatGPT 的浏览器中执行。</small></div>
     <label>如何称呼你<input name="name" required maxLength={40} placeholder="姓名或昵称，不需要手机号" autoComplete="name"/></label>
     <label>目前的事业阶段<select name="stage" required defaultValue=""><option value="" disabled>请选择当前阶段</option>{siteContent.stages.map(s=><option key={s}>{s}</option>)}</select></label>
     <label>你的经历与当前工作<textarea name="experience" required minLength={30} maxLength={1500} rows={4} placeholder="至少 30 字：做过什么、擅长什么、目前的工作与遇到的困难"/></label>
     <label>你的优势、兴趣与技能<textarea name="strengths" required maxLength={400} rows={2} placeholder="例如：喜欢写作，擅长访谈与整理复杂信息"/></label>
     <label>可投入的时间与已有资源 <span className="optional">选填</span><textarea name="resources" maxLength={400} rows={2} placeholder="例如：每周 8 小时、有行业经验、已有少量内容读者"/></label>
     <label>你最想解决的事业问题<textarea name="question" required minLength={10} maxLength={600} rows={3} placeholder="至少 10 字：希望获得什么方向、目前在纠结哪些选择"/></label>
-    <label className="consent"><input name="consent" type="checkbox" required/><span>同意将以上资料交给本地工作台，由执行插件所在浏览器中登录的 ChatGPT 生成报告，并在本地保存结果。</span></label>
+    <label className="consent"><input name="consent" type="checkbox" required/><span>同意将以上资料交给{workbenchName}，由执行插件所在浏览器中登录的 ChatGPT 生成报告，并由工作台保存结果。</span></label>
     {error&&<p className="form-error" role="alert">{error}</p>}
     <button className="button primary full" type="submit" disabled={busy}>{busy?<><LoaderCircle className="spin" size={18}/>正在提交…</>:'提交资料，立即生成报告'}</button>
     <p className="form-note">无需预约；提交后自动执行。其他任务正在生成时，会进入同一个队列。</p>

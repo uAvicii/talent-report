@@ -1,0 +1,7 @@
+# This is a fragment for the existing Caddy service, not a replacement
+# compose file. Keep its image, ports, networks and existing volumes.
+# Confirm the actual service name using `docker compose config --services`.
+services:
+  caddy:
+    volumes:
+      - /var/www/talent-report:/srv/talent-report:ro

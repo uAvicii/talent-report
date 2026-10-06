@@ -1,0 +1,17 @@
+# Append this site block to /opt/qkw-pd/Caddyfile on the server.
+# Mount /var/www/talent-report as /srv/talent-report:ro in the existing
+# Caddy container first. Keep its existing /data and /config volumes.
+report.pepehub.top {
+    encode zstd gzip
+
+    handle /api/report-client/* {
+        reverse_proxy http://43.139.241.178:8765 {
+            header_up Host img.pepehub.top
+        }
+    }
+
+    handle {
+        root * /srv/talent-report/current
+        file_server
+    }
+}
