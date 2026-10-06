@@ -31,7 +31,7 @@ jobs:
         run: |
           npm ci
           node node_modules/typescript/bin/tsc --noEmit --incremental false
-          node --test tests/report-domain.test.mjs tests/browser-bridge.test.mjs
+          node --test tests/*.test.mjs
           npm run build:tencent
           bash -n deploy/install.sh deploy/check-config.sh
       - name: Configure SSH
